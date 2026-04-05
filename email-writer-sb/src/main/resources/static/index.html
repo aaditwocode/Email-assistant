@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MailCraft —Your AI Email Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a25;
+      --surface3: #22222f;
+      --border: rgba(255,255,255,0.07);
+      --border-accent: rgba(139,92,246,0.4);
+      --text: #f0eff8;
+      --text-muted: #6b6a80;
+      --text-sub: #9998b0;
+      --accent: #8b5cf6;
+      --accent2: #a78bfa;
+      --accent-glow: rgba(139,92,246,0.25);
+      --gold: #f59e0b;
+      --gold-muted: rgba(245,158,11,0.15);
+      --success: #10b981;
+      --card-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+      --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    [data-theme="light"] {
+      --bg: #f5f3ff;
+      --surface: #ffffff;
+      --surface2: #f0eefb;
+      --surface3: #e8e5f8;
+      --border: rgba(0,0,0,0.07);
+      --border-accent: rgba(139,92,246,0.3);
+      --text: #1a1830;
+      --text-muted: #9896b0;
+      --text-sub: #5c5a78;
+      --accent: #7c3aed;
+      --accent2: #8b5cf6;
+      --accent-glow: rgba(124,58,237,0.15);
+      --gold: #d97706;
+      --gold-muted: rgba(217,119,6,0.1);
+      --success: #059669;
+      --card-shadow: 0 4px 24px rgba(124,58,237,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+      --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background var(--transition), color var(--transition);
+      overflow-x: hidden;
+    }
+
+    /* ── Ambient background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, var(--accent-glow), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(245,158,11,0.06), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: var(--noise);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      backdrop-filter: blur(20px) saturate(1.5);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,15,0.6);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    [data-theme="light"] header { background: rgba(245,243,255,0.7); }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--gold));
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+    .logo-text span { color: var(--accent2); }
+
+    .header-right { display: flex; align-items: center; gap: 16px; }
+
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--gold-muted);
+      color: var(--gold);
+      border: 1px solid rgba(245,158,11,0.2);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 52px; height: 28px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      position: relative;
+      transition: background var(--transition);
+      flex-shrink: 0;
+    }
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      transition: transform var(--transition);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+    [data-theme="light"] .theme-toggle::after { transform: translateX(24px); }
+
+    /* ── Main layout ── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 56px;
+      animation: fadeUp 0.8s var(--transition) both;
+    }
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -2px;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .hero h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--accent2), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 17px;
+      color: var(--text-sub);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.65;
+      font-weight: 300;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+
+    /* ── Form grid ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      animation: fadeUp 0.9s var(--transition) 0.1s both;
+    }
+    @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+
+    /* ── Input section ── */
+    .input-section {
+      padding: 36px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    @media (max-width: 720px) {
+      .input-section { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+
+    textarea, select {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      transition: border-color 0.2s, box-shadow 0.2s, background var(--transition);
+      outline: none;
+      resize: none;
+    }
+    textarea:focus, select:focus {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    textarea { min-height: 200px; line-height: 1.65; }
+    select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b5cf6' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; }
+    textarea::placeholder { color: var(--text-muted); }
+    [data-theme="light"] textarea, [data-theme="light"] select { color: var(--text); }
+
+    /* Tone pills */
+    .tone-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .pill:hover { border-color: var(--accent); color: var(--accent2); }
+    .pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* Generate button */
+    .btn-generate {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px var(--accent-glow), 0 1px 0 rgba(255,255,255,0.15) inset;
+      overflow: hidden;
+      letter-spacing: 0.2px;
+    }
+    .btn-generate::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .btn-generate:hover::before { opacity: 1; }
+    .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 8px 28px var(--accent-glow); }
+    .btn-generate:active { transform: translateY(0); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Output section ── */
+    .output-section {
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 400px;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+      color: var(--text-muted);
+      padding: 40px 20px;
+    }
+    .empty-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    .empty-state p { font-size: 14px; line-height: 1.5; max-width: 200px; }
+
+    /* Generated email output */
+    .email-output {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
+      max-height: 320px;
+      overflow-y: auto;
+      animation: fadeIn 0.4s ease both;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .email-output::-webkit-scrollbar { width: 4px; }
+    .email-output::-webkit-scrollbar-track { background: transparent; }
+    .email-output::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      animation: fadeIn 0.5s ease 0.1s both;
+    }
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-sub);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .stat-chip .stat-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .stat-chip.tokens .stat-dot { background: var(--accent2); }
+    .stat-chip.cost .stat-dot { background: var(--gold); }
+    .stat-chip.model .stat-dot { background: var(--success); }
+
+    /* Action buttons */
+    .action-row {
+      display: flex;
+      gap: 10px;
+      animation: fadeIn 0.5s ease 0.15s both;
+    }
+    .btn-action {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-sub);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .btn-action:hover { border-color: var(--accent); color: var(--accent2); background: var(--surface3); }
+    .btn-action.copied { border-color: var(--success); color: var(--success); }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Error state ── */
+    .error-msg {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #f87171;
+      animation: fadeIn 0.3s ease both;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 32px 24px 40px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    footer span { color: var(--accent2); }
+
+    /* ── Keyframes ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Scrollbar global ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">✉</div>
+    <div class="logo-text">Mail<span>Craft</span></div>
+  </a>
+  <div class="header-right">
+    <div class="badge">Gemini Powered</div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"></button>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-eyebrow">AI Email Assistant</div>
+    <h1>Write emails that<br/><em>actually work</em></h1>
+    <p>Paste any email, pick a tone, and get a polished professional reply — powered by Gemini.</p>
+  </div>
+
+  <div class="card form-grid">
+    <!-- ── LEFT: Input ── -->
+    <div class="input-section">
+      <div>
+        <div class="section-label">Original Email</div>
+        <div class="field">
+          <textarea id="emailContent" placeholder="Paste the email you want to reply to…" rows="9"></textarea>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Tone</div>
+        <div class="tone-pills" id="tonePills">
+          <div class="pill active" data-tone="Professional">Professional</div>
+          <div class="pill" data-tone="Friendly">Friendly</div>
+          <div class="pill" data-tone="Formal">Formal</div>
+          <div class="pill" data-tone="Concise">Concise</div>
+          <div class="pill" data-tone="Persuasive">Persuasive</div>
+          <div class="pill" data-tone="Empathetic">Empathetic</div>
+          <div class="pill" data-tone="Assertive">Assertive</div>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generateEmail()">
+        <span id="btnIcon">✦</span>
+        <span id="btnText">Generate Reply</span>
+      </button>
+    </div>
+
+    <!-- ── RIGHT: Output ── -->
+    <div class="output-section">
+      <div class="output-header">
+        <div class="section-label">Generated Reply</div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📨</div>
+        <p>Your AI-crafted reply will appear here</p>
+      </div>
+
+      <!-- Error -->
+      <div class="error-msg" id="errorMsg" style="display:none;"></div>
+
+      <!-- Output content (hidden until generated) -->
+      <div id="outputArea" style="display:none; flex-direction:column; gap:16px; flex:1;">
+        <div class="email-output" id="emailOutput"></div>
+
+        <div class="stats-bar" id="statsBar"></div>
+
+        <div class="action-row">
+          <button class="btn-action" id="copyBtn" onclick="copyEmail()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button class="btn-action" onclick="clearOutput()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Built with <span>Spring Boot</span> + Gemini Flash &nbsp;·&nbsp; MailCraft AI ©2025
+</footer>
+
+<script>
+  // ── Theme toggle ──
+  const html = document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  });
+
+  // ── Tone pills ──
+  let selectedTone = 'Professional';
+  document.getElementById('tonePills').addEventListener('click', e => {
+    if (!e.target.classList.contains('pill')) return;
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    e.target.classList.add('active');
+    selectedTone = e.target.dataset.tone;
+  });
+
+  // ── Generate ──
+  async function generateEmail() {
+    const emailContent = document.getElementById('emailContent').value.trim();
+    if (!emailContent) {
+      showError('Please paste an email to reply to.');
+      return;
+    }
+
+    setLoading(true);
+    hideError();
+    hideOutput();
+
+    try {
+      const res = await fetch('http://localhost:8080/api/email/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailcontent: emailContent, tone: selectedTone })
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      renderOutput(data);
+    } catch (err) {
+      showError('Failed to generate reply. Make sure the backend is running on port 8080. (' + err.message + ')');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderOutput(data) {
+    document.getElementById('emailOutput').textContent = data.email || 'No email generated.';
+
+    const tokens = data.tokens || {};
+    const statsBar = document.getElementById('statsBar');
+    statsBar.innerHTML = `
+      <div class="stat-chip tokens"><div class="stat-dot"></div>${tokens.total ?? '—'} tokens</div>
+      <div class="stat-chip cost"><div class="stat-dot"></div>${data.cost ?? '—'}</div>
+      <div class="stat-chip model"><div class="stat-dot"></div>${data.model ?? 'gemini'}</div>
+    `;
+
+    document.getElementById('emptyState').style.display = 'none';
+    const out = document.getElementById('outputArea');
+    out.style.display = 'flex';
+  }
+
+  function clearOutput() {
+    hideOutput();
+    document.getElementById('emailContent').value = '';
+    document.querySelectorAll('.pill').forEach((p,i) => p.classList.toggle('active', i===0));
+    selectedTone = 'Professional';
+  }
+
+  async function copyEmail() {
+    const text = document.getElementById('emailOutput').textContent;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2000);
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = on;
+    document.getElementById('btnIcon').style.display = on ? 'none' : '';
+    document.getElementById('btnText').textContent = on ? 'Generating…' : 'Generate Reply';
+    const existing = document.getElementById('btnSpinner');
+    if (on && !existing) {
+      const s = document.createElement('div');
+      s.className = 'spinner'; s.id = 'btnSpinner';
+      btn.prepend(s);
+    } else if (!on && existing) {
+      existing.remove();
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'flex';
+  }
+
+  function hideOutput() {
+    document.getElementById('outputArea').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'flex';
+  }
+
+  // Enter key shortcut (Ctrl/Cmd + Enter)
+  document.getElementById('emailContent').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateEmail();
+  });
+</script>
+</body>
+</html>
