@@ -88,7 +88,7 @@ function injectButton() {
             const emailContent = getEmailContent();
             console.log("Extracted email:", emailContent);
 
-            const response = await fetch("http://localhost:8080/api/email/generate", {
+            const response = await fetch("https://email-assistant-3.onrender.com/api/email/generate", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
