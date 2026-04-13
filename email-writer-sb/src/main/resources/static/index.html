@@ -471,6 +471,67 @@
       animation: fadeIn 0.3s ease both;
     }
 
+    /* ── Video Section ── */
+    .video-section {
+      margin-top: 60px;
+      padding: 40px;
+      text-align: center;
+      animation: fadeUp 1s var(--transition) 0.2s both;
+    }
+    .video-section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .video-section p.subtitle {
+      color: var(--text-sub);
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+    }
+    .video-container video {
+      width: 100%;
+      display: block;
+    }
+    .install-steps {
+      text-align: left;
+      max-width: 800px;
+      margin: 30px auto 0;
+      background: var(--surface2);
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .install-steps h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .install-steps ol {
+      padding-left: 24px;
+      color: var(--text-sub);
+      line-height: 1.8;
+    }
+    .install-steps li strong { color: var(--text); }
+    .install-steps li code {
+      background: var(--surface3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--accent2);
+    }
+
     /* ── Footer ── */
     footer {
       position: relative;
@@ -524,7 +585,6 @@
   </div>
 
   <div class="card form-grid">
-    <!-- ── LEFT: Input ── -->
     <div class="input-section">
       <div>
         <div class="section-label">Original Email</div>
@@ -552,22 +612,18 @@
       </button>
     </div>
 
-    <!-- ── RIGHT: Output ── -->
     <div class="output-section">
       <div class="output-header">
         <div class="section-label">Generated Reply</div>
       </div>
 
-      <!-- Empty state -->
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">📨</div>
         <p>Your AI-crafted reply will appear here</p>
       </div>
 
-      <!-- Error -->
       <div class="error-msg" id="errorMsg" style="display:none;"></div>
 
-      <!-- Output content (hidden until generated) -->
       <div id="outputArea" style="display:none; flex-direction:column; gap:16px; flex:1;">
         <div class="email-output" id="emailOutput"></div>
 
@@ -586,6 +642,31 @@
       </div>
     </div>
   </div>
+
+  <div class="video-section card">
+    <h2>Want to use MailCraft directly in Gmail?</h2>
+    <p class="subtitle">Since our extension isn't on the Chrome Web Store yet, you can easily install it locally in Developer Mode.</p>
+    
+    <div class="video-container">
+      <video controls preload="metadata">
+        <source src="Mailcraftextension-howtouse-video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <div class="install-steps">
+      <h3>Quick Installation Steps:</h3>
+      <ol>
+        <li>Download the extension source code to your computer and extract it from https://github.com/aaditwocode/Email-assistant</li>
+        <li>Open a new tab in Chrome and go to <code>chrome://extensions/</code>.</li>
+        <li>Turn on the <strong>Developer mode</strong> switch in the top right corner.</li>
+        <li>Click the <strong>Load unpacked</strong> button in the top left.</li>
+        <li>Select the <code>email-writer-sb-ext</code> folder you downloaded.</li>
+        <li>Open Gmail, hit "Compose" or "Reply", and look for the new <strong>✉ AI Reply</strong> button next to the Send button!</li>
+      </ol>
+    </div>
+  </div>
+
 </main>
 
 <footer>
@@ -621,7 +702,8 @@
     hideOutput();
 
     try {
-      const res = await fetch('http://localhost:8080/api/email/generate', {
+      // Note: Make sure the deployed backend URL replaces localhost if you host the Spring Boot app somewhere else
+      const res = await fetch('/api/email/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emailcontent: emailContent, tone: selectedTone })
@@ -635,7 +717,7 @@
       const data = await res.json();
       renderOutput(data);
     } catch (err) {
-      showError('Failed to generate reply. Make sure the backend is running on port 8080. (' + err.message + ')');
+      showError('Failed to generate reply. Make sure the backend is running. (' + err.message + ')');
     } finally {
       setLoading(false);
     }
